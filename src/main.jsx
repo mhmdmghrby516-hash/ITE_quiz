@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { cloneDemoData } from './data'
 import './styles.css'
 
-const DATA_KEY = 'asmaa-react-quiz-data-v2'
+const DATA_KEY = 'asmaa-react-quiz-data-v3'
 const RESULTS_KEY = 'asmaa-react-quiz-results-v1'
 const ADMIN_SESSION_KEY = 'asmaa-react-admin-session'
 const ADMIN_USERNAME = 'admin'
@@ -89,8 +89,9 @@ function Footer() {
         <div className="footer-column">
           <h3>روابط سريعة</h3>
           <button className="footer-link link-button" onClick={() => go()}>الرئيسية</button>
-          <button className="footer-link link-button" onClick={() => go('subject/artificial-intelligence')}>ذكاء صنعي</button>
-          <button className="footer-link link-button" onClick={() => go('subject/intelligent-algorithms')}>الخوارزميات الذكية</button>
+          <button className="footer-link link-button" onClick={() => go('subject/excel')}>Excel</button>
+          <button className="footer-link link-button" onClick={() => go('subject/powerpoint')}>PowerPoint</button>
+          <button className="footer-link link-button" onClick={() => go('subject/word')}>Word</button>
           <button className="footer-link link-button" onClick={() => go('admin')}>دخول الأدمن</button>
         </div>
         <div className="footer-column">
