@@ -299,7 +299,18 @@ function AdminPage({ data, onChange, onLogout }) {
   const [subjectName, setSubjectName] = useState('')
   const [quizForm, setQuizForm] = useState({ subjectId: data.subjects[0]?.id || '', title: '', description: '' })
   const [questionForm, setQuestionForm] = useState({ quizId: data.quizzes[0]?.id || '', text: '', answers: ['', '', '', ''], correctIndex: 0, explanation: '' })
+  const firstSubject = data.subjects[0]
+  const firstEditableQuiz = data.quizzes.find((quiz) => quiz.questions.length) || data.quizzes[0]
+  const firstEditableQuestion = firstEditableQuiz?.questions[0]
+  const [editSubjectId, setEditSubjectId] = useState(firstSubject?.id || '')
+  const [subjectEdit, setSubjectEdit] = useState({ name: firstSubject?.name || '', description: firstSubject?.description || '', icon: firstSubject?.icon || '✦' })
+  const [editQuizId, setEditQuizId] = useState(firstEditableQuiz?.id || '')
+  const [editQuestionId, setEditQuestionId] = useState(firstEditableQuestion?.id || '')
+  const [questionEdit, setQuestionEdit] = useState({ text: firstEditableQuestion?.text || '', answers: firstEditableQuestion?.answers || [], correctIndex: firstEditableQuestion?.correctIndex || 0, explanation: firstEditableQuestion?.explanation || '' })
+  const [adminNotice, setAdminNotice] = useState('')
   const totalQuestions = useMemo(() => data.quizzes.reduce((sum, quiz) => sum + quiz.questions.length, 0), [data])
+  const editableQuiz = data.quizzes.find((quiz) => quiz.id === editQuizId)
+  const editableQuestions = editableQuiz?.questions || []
 
   const addSubject = (event) => {
     event.preventDefault(); if (!subjectName.trim()) return
@@ -319,17 +330,100 @@ function AdminPage({ data, onChange, onLogout }) {
     onChange({ ...data, quizzes: nextQuizzes }); setQuestionForm((current) => ({ ...current, text: '', answers: ['', '', '', ''], correctIndex: 0, explanation: '' }))
   }
 
+  const selectSubjectToEdit = (subjectId) => {
+    const subject = data.subjects.find((item) => item.id === subjectId)
+    setEditSubjectId(subjectId)
+    setSubjectEdit({ name: subject?.name || '', description: subject?.description || '', icon: subject?.icon || '✦' })
+    setAdminNotice('')
+  }
+
+  const saveSubject = (event) => {
+    event.preventDefault()
+    if (!editSubjectId || !subjectEdit.name.trim()) return
+    const subjects = data.subjects.map((subject) => subject.id === editSubjectId ? {
+      ...subject,
+      name: subjectEdit.name.trim(),
+      description: subjectEdit.description.trim(),
+      icon: subjectEdit.icon.trim() || '✦',
+    } : subject)
+    onChange({ ...data, subjects })
+    setAdminNotice('تم حفظ تعديلات المادة بنجاح.')
+  }
+
+  const loadQuestionToEdit = (quizId, questionId) => {
+    const quiz = data.quizzes.find((item) => item.id === quizId)
+    const question = quiz?.questions.find((item) => item.id === questionId)
+    setEditQuizId(quizId)
+    setEditQuestionId(question?.id || '')
+    setQuestionEdit({
+      text: question?.text || '',
+      answers: question ? [...question.answers] : [],
+      correctIndex: question?.correctIndex || 0,
+      explanation: question?.explanation || '',
+    })
+    setAdminNotice('')
+  }
+
+  const selectQuizToEdit = (quizId) => {
+    const quiz = data.quizzes.find((item) => item.id === quizId)
+    loadQuestionToEdit(quizId, quiz?.questions[0]?.id || '')
+  }
+
+  const saveQuestion = (event) => {
+    event.preventDefault()
+    if (!editQuizId || !editQuestionId || !questionEdit.text.trim() || questionEdit.answers.some((answer) => !answer.trim())) return
+    const quizzes = data.quizzes.map((quiz) => quiz.id === editQuizId ? {
+      ...quiz,
+      questions: quiz.questions.map((question) => question.id === editQuestionId ? {
+        ...question,
+        text: questionEdit.text.trim(),
+        answers: questionEdit.answers.map((answer) => answer.trim()),
+        correctIndex: Number(questionEdit.correctIndex),
+        explanation: questionEdit.explanation.trim() || 'لا يوجد شرح إضافي.',
+      } : question),
+    } : quiz)
+    onChange({ ...data, quizzes })
+    setAdminNotice('تم حفظ تعديلات السؤال والإجابات بنجاح.')
+  }
+
   const resetData = () => { if (window.confirm('إعادة جميع بيانات النسخة التجريبية؟')) onChange(cloneDemoData()) }
 
   return (
     <>
       <div className="admin-heading"><div><span className="eyebrow dark">محفوظ في هذا المتصفح فقط</span><h1>الإدارة المحلية</h1><p>التعديلات لا تحتاج خادمًا، لكنها لن تظهر على جهاز آخر.</p></div><div className="admin-actions"><button className="btn secondary" onClick={onLogout}>تسجيل الخروج</button><button className="btn danger" onClick={resetData}>إعادة البيانات التجريبية</button></div></div>
       <div className="stats-grid"><div className="stat-card"><strong>{data.subjects.length}</strong><span>مواد</span></div><div className="stat-card"><strong>{data.quizzes.length}</strong><span>اختبارات</span></div><div className="stat-card"><strong>{totalQuestions}</strong><span>أسئلة</span></div></div>
+      {adminNotice && <div className="admin-notice" role="status">✓ {adminNotice}</div>}
       <div className="admin-grid">
         <form className="card form-card" onSubmit={addSubject}><h2>إضافة مادة</h2><label>اسم المادة<input value={subjectName} onChange={(e) => setSubjectName(e.target.value)} required /></label><button className="btn">إضافة</button></form>
         <form className="card form-card" onSubmit={addQuiz}><h2>إضافة اختبار</h2><label>المادة<select value={quizForm.subjectId} onChange={(e) => setQuizForm({ ...quizForm, subjectId: e.target.value })}>{data.subjects.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label><label>العنوان<input value={quizForm.title} onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })} required /></label><label>الوصف<input value={quizForm.description} onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })} /></label><button className="btn">إضافة الاختبار</button></form>
       </div>
       <form className="card form-card question-form" onSubmit={addQuestion}><h2>إضافة سؤال</h2><label>الاختبار<select value={questionForm.quizId} onChange={(e) => setQuestionForm({ ...questionForm, quizId: e.target.value })}>{data.quizzes.map((quiz) => <option value={quiz.id} key={quiz.id}>{quiz.title}</option>)}</select></label><label>نص السؤال<input value={questionForm.text} onChange={(e) => setQuestionForm({ ...questionForm, text: e.target.value })} required /></label><div className="answers-editor">{questionForm.answers.map((answer, index) => <label key={index}><span><input type="radio" name="correct" checked={Number(questionForm.correctIndex) === index} onChange={() => setQuestionForm({ ...questionForm, correctIndex: index })} /> الصحيحة</span><input value={answer} placeholder={`الإجابة ${index + 1}`} onChange={(e) => { const answers = [...questionForm.answers]; answers[index] = e.target.value; setQuestionForm({ ...questionForm, answers }) }} required /></label>)}</div><label>الشرح<input value={questionForm.explanation} onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })} /></label><button className="btn">إضافة السؤال</button></form>
+      <div className="admin-section-heading">
+        <span className="eyebrow dark">إدارة المحتوى الحالي</span>
+        <h2>تعديل المواد والأسئلة</h2>
+        <p>اختر العنصر المطلوب، عدّل بياناته، ثم اضغط حفظ التعديلات.</p>
+      </div>
+      <div className="admin-grid edit-grid">
+        <form className="card form-card" onSubmit={saveSubject}>
+          <h2>تعديل مادة</h2>
+          <label>اختر المادة<select value={editSubjectId} onChange={(event) => selectSubjectToEdit(event.target.value)}>{data.subjects.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label>
+          <label>اسم المادة<input value={subjectEdit.name} onChange={(event) => setSubjectEdit({ ...subjectEdit, name: event.target.value })} required /></label>
+          <label>الوصف<textarea rows="4" value={subjectEdit.description} onChange={(event) => setSubjectEdit({ ...subjectEdit, description: event.target.value })} /></label>
+          <label>الأيقونة أو الرمز<input value={subjectEdit.icon} onChange={(event) => setSubjectEdit({ ...subjectEdit, icon: event.target.value })} /></label>
+          <button className="btn" type="submit">حفظ تعديلات المادة</button>
+        </form>
+        <form className="card form-card edit-question-form" onSubmit={saveQuestion}>
+          <h2>تعديل سؤال</h2>
+          <label>اختر الاختبار<select value={editQuizId} onChange={(event) => selectQuizToEdit(event.target.value)}>{data.quizzes.map((quiz) => <option value={quiz.id} key={quiz.id}>{quiz.title}</option>)}</select></label>
+          {editableQuestions.length ? <>
+            <label>اختر السؤال<select value={editQuestionId} onChange={(event) => loadQuestionToEdit(editQuizId, event.target.value)}>{editableQuestions.map((question, index) => <option value={question.id} key={question.id}>{index + 1}. {question.text.slice(0, 70)}</option>)}</select></label>
+            <label>نص السؤال<textarea rows="4" value={questionEdit.text} onChange={(event) => setQuestionEdit({ ...questionEdit, text: event.target.value })} required /></label>
+            <div className="answers-editor">{questionEdit.answers.map((answer, index) => <label key={index}><span><input type="radio" name="edit-correct" checked={Number(questionEdit.correctIndex) === index} onChange={() => setQuestionEdit({ ...questionEdit, correctIndex: index })} /> الإجابة الصحيحة</span><input value={answer} onChange={(event) => { const answers = [...questionEdit.answers]; answers[index] = event.target.value; setQuestionEdit({ ...questionEdit, answers }) }} required /></label>)}</div>
+            <label>شرح الإجابة<textarea rows="3" value={questionEdit.explanation} onChange={(event) => setQuestionEdit({ ...questionEdit, explanation: event.target.value })} /></label>
+            <button className="btn" type="submit">حفظ تعديلات السؤال</button>
+          </> : <p className="empty-edit-state">لا يحتوي هذا الاختبار على أسئلة لتعديلها.</p>}
+        </form>
+      </div>
     </>
   )
 }
