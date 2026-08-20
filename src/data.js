@@ -1,4 +1,5 @@
 import { aiQuizzes, aiSubject } from './aiQuestions.js'
+import { biaQuizzes, biaSubject } from './biaQuestions.js'
 
 export const demoData = {
   subjects: [
@@ -6,6 +7,7 @@ export const demoData = {
     { id: 'physics', name: 'الفيزياء', description: 'اختبارات وأسئلة في مادة الفيزياء', icon: '⚛' },
     { id: 'chemistry', name: 'الكيمياء', description: 'اختبارات وأسئلة في مادة الكيمياء', icon: '⚗' },
     aiSubject,
+    biaSubject,
   ],
   quizzes: [
     {
@@ -28,6 +30,7 @@ export const demoData = {
       ],
     },
     ...aiQuizzes,
+    ...biaQuizzes,
   ],
 }
 

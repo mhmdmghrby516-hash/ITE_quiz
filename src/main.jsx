@@ -12,7 +12,19 @@ const ADMIN_PASSWORD = 'Admin@12345'
 function readData() {
   try {
     const saved = localStorage.getItem(DATA_KEY)
-    return saved ? JSON.parse(saved) : cloneDemoData()
+    if (!saved) return cloneDemoData()
+
+    const current = JSON.parse(saved)
+    const defaults = cloneDemoData()
+    const savedSubjects = Array.isArray(current.subjects) ? current.subjects : []
+    const savedQuizzes = Array.isArray(current.quizzes) ? current.quizzes : []
+    const subjectIds = new Set(savedSubjects.map((subject) => subject.id))
+    const quizIds = new Set(savedQuizzes.map((quiz) => quiz.id))
+
+    return {
+      subjects: [...savedSubjects, ...defaults.subjects.filter((subject) => !subjectIds.has(subject.id))],
+      quizzes: [...savedQuizzes, ...defaults.quizzes.filter((quiz) => !quizIds.has(quiz.id))],
+    }
   } catch {
     return cloneDemoData()
   }
@@ -78,6 +90,7 @@ function Footer() {
           <h3>روابط سريعة</h3>
           <button className="footer-link link-button" onClick={() => go()}>الرئيسية</button>
           <button className="footer-link link-button" onClick={() => go('subject/artificial-intelligence')}>ذكاء صنعي</button>
+          <button className="footer-link link-button" onClick={() => go('subject/intelligent-algorithms')}>الخوارزميات الذكية</button>
           <button className="footer-link link-button" onClick={() => go('admin')}>دخول الأدمن</button>
         </div>
         <div className="footer-column">
