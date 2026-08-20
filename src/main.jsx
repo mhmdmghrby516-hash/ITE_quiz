@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { cloneDemoData } from './data'
 import './styles.css'
 
-const DATA_KEY = 'asmaa-react-quiz-data-v1'
+const DATA_KEY = 'asmaa-react-quiz-data-v2'
 const RESULTS_KEY = 'asmaa-react-quiz-results-v1'
 const ADMIN_SESSION_KEY = 'asmaa-react-admin-session'
 const ADMIN_USERNAME = 'admin'

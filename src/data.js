@@ -1,8 +1,11 @@
+import { aiQuizzes, aiSubject } from './aiQuestions.js'
+
 export const demoData = {
   subjects: [
     { id: 'math', name: 'الرياضيات', description: 'اختبارات وأسئلة في مادة الرياضيات', icon: '∑' },
     { id: 'physics', name: 'الفيزياء', description: 'اختبارات وأسئلة في مادة الفيزياء', icon: '⚛' },
     { id: 'chemistry', name: 'الكيمياء', description: 'اختبارات وأسئلة في مادة الكيمياء', icon: '⚗' },
+    aiSubject,
   ],
   quizzes: [
     {
@@ -24,6 +27,7 @@ export const demoData = {
         { id: 'p2', text: 'ما سرعة الضوء تقريبًا في الفراغ؟', explanation: 'سرعة الضوء تقارب 300,000 كم/ث.', answers: ['30,000 كم/ث', '150,000 كم/ث', '300,000 كم/ث', '600,000 كم/ث'], correctIndex: 2 },
       ],
     },
+    ...aiQuizzes,
   ],
 }
 
