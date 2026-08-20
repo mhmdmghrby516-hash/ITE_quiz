@@ -98,7 +98,20 @@ button { border: 0; }
 .question-form { margin-top: 20px; }
 .answers-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .answers-editor label { border: 1px solid var(--border); border-radius: 12px; padding: 11px; }
-.footer { border-top: 1px solid var(--border); padding: 22px 0; color: var(--muted); background: #fff; }
+.footer { position: relative; overflow: hidden; padding: 52px 0 20px; color: #cbd5e1; background: #111827; }
+.footer::before { content: ''; position: absolute; inset-inline-end: -100px; top: -160px; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle, rgba(79,70,229,.2), transparent 68%); pointer-events: none; }
+.footer-grid { position: relative; display: grid; grid-template-columns: 1.4fr .7fr 1fr; gap: clamp(28px, 6vw, 72px); }
+.footer-brand .brand { padding: 0; margin-bottom: 12px; font-size: 24px; }
+.footer-brand p, .footer-column p { max-width: 440px; margin: 0; color: #94a3b8; line-height: 1.9; }
+.footer-column { display: flex; align-items: flex-start; flex-direction: column; }
+.footer-column h3 { margin: 4px 0 14px; color: #fff; font-size: 17px; }
+.footer-link { position: relative; padding: 4px 0; color: #cbd5e1; cursor: pointer; }
+.footer-link::after { content: ''; position: absolute; inset-inline-start: 0; bottom: 2px; width: 0; height: 1px; background: #818cf8; transition: width .2s; }
+.footer-link:hover { color: #fff; }
+.footer-link:hover::after { width: 100%; }
+.footer-badge { display: inline-block; margin-top: 16px; border: 1px solid rgba(129,140,248,.3); border-radius: 999px; padding: 5px 10px; color: #c7d2fe; background: rgba(79,70,229,.12); font-size: 12px; }
+.footer-divider { height: 1px; margin: 38px 0 18px; background: rgba(148,163,184,.15); }
+.footer-bottom { display: flex; justify-content: space-between; gap: 18px; color: #64748b; font-size: 13px; }
 
 @media (max-width: 720px) {
   .nav-wrap, .quiz-heading, .admin-heading { align-items: flex-start; flex-direction: column; padding-block: 14px; }
@@ -111,4 +124,7 @@ button { border: 0; }
   .stat-card { padding: 12px 6px; }
   .result-score { font-size: 58px; }
   .review-answer { align-items: flex-start; flex-direction: column; }
+  .footer { padding-top: 38px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 30px; }
+  .footer-bottom { align-items: flex-start; flex-direction: column; gap: 5px; }
 }

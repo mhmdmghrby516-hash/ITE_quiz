@@ -59,8 +59,39 @@ function App() {
     <div className="app-shell">
       <Header adminAuthenticated={adminAuthenticated} onLogout={() => { sessionStorage.removeItem(ADMIN_SESSION_KEY); setAdminAuthenticated(false); go() }} />
       <main className="container page-space">{content}</main>
-      <footer className="footer"><div className="container">منصة كويزات React — تعمل دون Backend</div></footer>
+      <Footer />
     </div>
+  )
+}
+
+function Footer() {
+  const currentYear = new Date().getFullYear()
+
+  return (
+    <footer className="footer">
+      <div className="container footer-grid">
+        <div className="footer-brand">
+          <button className="brand link-button" onClick={() => go()}>🎓 منصة الكويزات</button>
+          <p>منصة تعليمية تساعدك على مراجعة معلوماتك، حل الاختبارات، ومعرفة الإجابات الصحيحة فورًا.</p>
+        </div>
+        <div className="footer-column">
+          <h3>روابط سريعة</h3>
+          <button className="footer-link link-button" onClick={() => go()}>الرئيسية</button>
+          <button className="footer-link link-button" onClick={() => go('subject/artificial-intelligence')}>ذكاء صنعي</button>
+          <button className="footer-link link-button" onClick={() => go('admin')}>دخول الأدمن</button>
+        </div>
+        <div className="footer-column">
+          <h3>تعلّم بذكاء</h3>
+          <p>تدرّب باستمرار، راجع أخطاءك، وحوّل كل محاولة إلى خطوة جديدة نحو التفوق.</p>
+          <span className="footer-badge">اختبارات تفاعلية وتصحيح فوري</span>
+        </div>
+      </div>
+      <div className="footer-divider" />
+      <div className="container footer-bottom">
+        <span>© {currentYear} منصة الكويزات. جميع الحقوق محفوظة.</span>
+        <span>صُممت بعناية لدعم رحلة الطلاب التعليمية.</span>
+      </div>
+    </footer>
   )
 }
 
