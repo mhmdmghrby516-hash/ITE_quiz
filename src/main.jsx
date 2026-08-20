@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { cloneDemoData } from './data'
 import './styles.css'
 
-const DATA_KEY = 'asmaa-react-quiz-data-v3'
+const DATA_KEY = 'asmaa-react-quiz-data-v4'
 const RESULTS_KEY = 'asmaa-react-quiz-results-v1'
 const ADMIN_SESSION_KEY = 'asmaa-react-admin-session'
 const ADMIN_USERNAME = 'admin'
@@ -125,6 +125,14 @@ function Header({ adminAuthenticated, onLogout }) {
   )
 }
 
+function SubjectLogo({ subject, large = false }) {
+  return (
+    <div className={`subject-icon ${large ? 'large' : ''} ${subject.theme ? `subject-icon--${subject.theme}` : ''}`}>
+      {subject.logo ? <img src={subject.logo} alt={`شعار ${subject.name}`} /> : subject.icon || '✦'}
+    </div>
+  )
+}
+
 function HomePage({ data }) {
   return (
     <>
@@ -138,8 +146,8 @@ function HomePage({ data }) {
         {data.subjects.map((subject) => {
           const count = data.quizzes.filter((quiz) => quiz.subjectId === subject.id).length
           return (
-            <article className="card subject-card" key={subject.id}>
-              <div className="subject-icon">{subject.icon || '✦'}</div>
+            <article className={`card subject-card ${subject.theme ? `subject-card--${subject.theme}` : ''}`} style={subject.logo ? { '--subject-watermark': `url("${subject.logo}")` } : undefined} key={subject.id}>
+              <SubjectLogo subject={subject} />
               <span className="badge">{count} اختبار</span>
               <h3>{subject.name}</h3>
               <p>{subject.description}</p>
@@ -160,7 +168,7 @@ function SubjectPage({ data, subjectId }) {
   return (
     <>
       <button className="back-link" onClick={() => go()}>→ العودة إلى المواد</button>
-      <div className="page-title"><div className="subject-icon large">{subject.icon || '✦'}</div><div><h1>{subject.name}</h1><p>{subject.description}</p></div></div>
+      <div className="page-title"><SubjectLogo subject={subject} large /><div><h1>{subject.name}</h1><p>{subject.description}</p></div></div>
       <div className="grid">
         {quizzes.map((quiz) => (
           <article className="card quiz-card" key={quiz.id}>

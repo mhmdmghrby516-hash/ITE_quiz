@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">PowerPoint</title>
+  <path d="M67 14a50 50 0 1 1 0 100z" fill="#d24726"/>
+  <path d="M67 14a50 50 0 0 1 50 50H67z" fill="#ff8f6b"/>
+  <path d="M67 64h50a50 50 0 0 1-50 50z" fill="#c43e1c"/>
+  <rect x="11" y="34" width="66" height="66" rx="9" fill="#b7472a"/>
+  <path d="M34 51h18c12 0 18 6 18 16 0 11-7 17-19 17h-6v9H34zm11 9v15h6c6 0 9-3 9-8 0-4-3-7-9-7z" fill="#fff"/>
+</svg>
