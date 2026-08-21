@@ -69,10 +69,22 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Header adminAuthenticated={adminAuthenticated} onLogout={() => { sessionStorage.removeItem(ADMIN_SESSION_KEY); setAdminAuthenticated(false); go() }} />
-      <main className="container page-space">{content}</main>
+      <a className="skip-link" href="#main-content">انتقل إلى المحتوى الرئيسي</a>
+      <Header activePage={route.page} adminAuthenticated={adminAuthenticated} onLogout={() => { sessionStorage.removeItem(ADMIN_SESSION_KEY); setAdminAuthenticated(false); go() }} />
+      <main className="container page-space" id="main-content" tabIndex="-1">{content}</main>
       <Footer />
     </div>
+  )
+}
+
+function PlatformMark() {
+  return (
+    <svg className="platform-mark" viewBox="0 0 48 48" aria-hidden="true">
+      <path d="M7 14 24 6l17 8-17 8z" />
+      <path d="M13 19v10c0 4 5 8 11 8s11-4 11-8V19" />
+      <path d="M41 14v13" />
+      <circle cx="41" cy="30" r="2" />
+    </svg>
   )
 }
 
@@ -83,21 +95,21 @@ function Footer() {
     <footer className="footer">
       <div className="container footer-grid">
         <div className="footer-brand">
-          <button className="brand link-button" onClick={() => go()}>🎓 منصة الكويزات</button>
+          <button className="brand brand-lockup link-button" type="button" aria-label="العودة إلى الصفحة الرئيسية" onClick={() => go()}><PlatformMark /><span>منصة الكويزات</span></button>
           <p>منصة تعليمية تساعدك على مراجعة معلوماتك، حل الاختبارات، ومعرفة الإجابات الصحيحة فورًا.</p>
         </div>
-        <div className="footer-column">
+        <nav className="footer-column" aria-label="روابط التذييل">
           <h3>روابط سريعة</h3>
-          <button className="footer-link link-button" onClick={() => go()}>الرئيسية</button>
-          <button className="footer-link link-button" onClick={() => go('subject/excel')}>Excel</button>
-          <button className="footer-link link-button" onClick={() => go('subject/powerpoint')}>PowerPoint</button>
-          <button className="footer-link link-button" onClick={() => go('subject/word')}>Word</button>
-          <button className="footer-link link-button" onClick={() => go('admin')}>دخول الأدمن</button>
-        </div>
+          <button className="footer-link link-button" type="button" onClick={() => go()}>الرئيسية</button>
+          <button className="footer-link link-button" type="button" onClick={() => go('subject/excel')}>Excel</button>
+          <button className="footer-link link-button" type="button" onClick={() => go('subject/powerpoint')}>PowerPoint</button>
+          <button className="footer-link link-button" type="button" onClick={() => go('subject/word')}>Word</button>
+          <button className="footer-link link-button" type="button" onClick={() => go('admin')}>دخول الأدمن</button>
+        </nav>
         <div className="footer-column">
           <h3>تعلّم بذكاء</h3>
           <p>تدرّب باستمرار، راجع أخطاءك، وحوّل كل محاولة إلى خطوة جديدة نحو التفوق.</p>
-          <span className="footer-badge">اختبارات تفاعلية وتصحيح فوري</span>
+          <span className="footer-badge"><span aria-hidden="true">✓</span> اختبارات تفاعلية وتصحيح فوري</span>
         </div>
       </div>
       <div className="footer-divider" />
@@ -109,16 +121,16 @@ function Footer() {
   )
 }
 
-function Header({ adminAuthenticated, onLogout }) {
+function Header({ activePage, adminAuthenticated, onLogout }) {
   return (
     <header className="site-header">
       <div className="container nav-wrap">
-        <button className="brand link-button" onClick={() => go()}>🎓 منصة الكويزات</button>
-        <nav>
-          <button className="nav-link link-button" onClick={() => go()}>الرئيسية</button>
+        <button className="brand brand-lockup link-button" type="button" aria-label="منصة الكويزات - الرئيسية" onClick={() => go()}><PlatformMark /><span>منصة الكويزات</span></button>
+        <nav aria-label="التنقل الرئيسي">
+          <button className="nav-link link-button" type="button" aria-current={activePage === 'home' ? 'page' : undefined} onClick={() => go()}>الرئيسية</button>
           {adminAuthenticated
-            ? <button className="nav-link link-button" onClick={onLogout}>تسجيل الخروج</button>
-            : <button className="nav-link link-button" onClick={() => go('admin')}>دخول الأدمن</button>}
+            ? <button className="nav-link link-button" type="button" onClick={onLogout}>تسجيل الخروج</button>
+            : <button className="nav-link nav-cta link-button" type="button" aria-current={activePage === 'admin' ? 'page' : undefined} onClick={() => go('admin')}>دخول الأدمن</button>}
         </nav>
       </div>
     </header>
@@ -126,36 +138,63 @@ function Header({ adminAuthenticated, onLogout }) {
 }
 
 function SubjectLogo({ subject, large = false }) {
+  const [imageFailed, setImageFailed] = useState(false)
+
   return (
-    <div className={`subject-icon ${large ? 'large' : ''} ${subject.theme ? `subject-icon--${subject.theme}` : ''}`}>
-      {subject.logo ? <img src={subject.logo} alt={`شعار ${subject.name}`} /> : subject.icon || '✦'}
+    <div className={`subject-icon ${large ? 'large' : ''} ${subject.theme ? `subject-icon--${subject.theme}` : ''}`} aria-hidden={imageFailed || !subject.logo ? undefined : 'false'}>
+      {subject.logo && !imageFailed
+        ? <img src={subject.logo} alt={`شعار ${subject.name}`} loading="lazy" decoding="async" onError={() => setImageFailed(true)} />
+        : <span className="subject-icon-fallback" aria-label={`رمز ${subject.name}`}>{subject.icon || subject.name?.charAt(0) || '✦'}</span>}
     </div>
   )
 }
 
 function HomePage({ data }) {
+  const scrollToSubjects = () => document.getElementById('subjects')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
   return (
     <>
-      <section className="hero">
-        <span className="eyebrow">تعلّم واختبر نفسك</span>
-        <h1>اختبر معلوماتك بسهولة</h1>
-        <p>اختر المادة، أجب عن الأسئلة، واعرف الإجابة الصحيحة فورًا.</p>
+      <section className="hero" aria-labelledby="hero-title">
+        <div className="hero-content">
+          <span className="eyebrow"><span aria-hidden="true">✦</span> تعلّم واختبر نفسك</span>
+          <h1 id="hero-title">طوّر مهاراتك،<br /><span>اختبارًا بعد اختبار.</span></h1>
+          <p>تدرّب على أدوات Microsoft Office من خلال تجربة تعليمية واضحة، سريعة، ومصممة لتمنحك نتيجة فورية.</p>
+          <div className="hero-actions">
+            <button className="btn hero-primary" type="button" onClick={scrollToSubjects}>استكشف المواد <span aria-hidden="true">←</span></button>
+            <button className="btn hero-secondary" type="button" onClick={() => go('admin')}>دخول الأدمن</button>
+          </div>
+          <div className="hero-features" aria-label="مميزات المنصة">
+            <span><strong>3</strong> مواد متخصصة</span>
+            <span><strong>فوري</strong> تصحيح الإجابات</span>
+            <span><strong>100%</strong> متجاوب</span>
+          </div>
+        </div>
+        <div className="hero-visual" aria-hidden="true">
+          <div className="hero-visual-glow" />
+          <div className="hero-dashboard-card">
+            <div className="hero-dashboard-head"><span>رحلتك التعليمية</span><span className="status-dot">مباشر</span></div>
+            <div className="hero-apps">
+              {data.subjects.slice(0, 3).map((subject, index) => <div className={`hero-app hero-app-${index + 1}`} key={subject.id}><SubjectLogo subject={subject} /><span>{subject.name}</span></div>)}
+            </div>
+            <div className="hero-progress"><div><span>تقدمك القادم</span><strong>ابدأ الآن</strong></div><span className="progress-ring">75%</span></div>
+          </div>
+        </div>
       </section>
-      <div className="section-heading"><div><h2>المواد المتاحة</h2><p>اختر مجالًا للبدء</p></div></div>
-      <div className="grid">
-        {data.subjects.map((subject) => {
-          const count = data.quizzes.filter((quiz) => quiz.subjectId === subject.id).length
-          return (
-            <article className={`card subject-card ${subject.theme ? `subject-card--${subject.theme}` : ''}`} style={subject.logo ? { '--subject-watermark': `url("${subject.logo}")` } : undefined} key={subject.id}>
-              <SubjectLogo subject={subject} />
-              <span className="badge">{count} اختبار</span>
-              <h3>{subject.name}</h3>
-              <p>{subject.description}</p>
-              <button className="btn" onClick={() => go(`subject/${subject.id}`)}>عرض الاختبارات</button>
-            </article>
-          )
-        })}
-      </div>
+      <section className="subjects-section" id="subjects" aria-labelledby="subjects-title">
+        <div className="section-heading"><div><span className="section-kicker">مسارات التعلّم</span><h2 id="subjects-title">اختر المادة وابدأ رحلتك</h2><p>كل مسار مصمم ليمنحك ممارسة عملية وتجربة اختبار سلسة.</p></div><span className="section-count">{data.subjects.length} مواد متاحة</span></div>
+        <div className="grid subjects-grid">
+          {data.subjects.map((subject) => {
+            const count = data.quizzes.filter((quiz) => quiz.subjectId === subject.id).length
+            return (
+              <article className={`card subject-card ${subject.theme ? `subject-card--${subject.theme}` : ''}`} style={subject.logo ? { '--subject-watermark': `url("${subject.logo}")` } : undefined} key={subject.id}>
+                <div className="subject-card-top"><SubjectLogo subject={subject} /><span className="badge">{count} اختبار</span></div>
+                <div className="subject-card-body"><h3>{subject.name}</h3><p>{subject.description}</p></div>
+                <button className="btn subject-start" type="button" aria-label={`ابدأ مادة ${subject.name}`} onClick={() => go(`subject/${subject.id}`)}><span>ابدأ</span><span aria-hidden="true">←</span></button>
+              </article>
+            )
+          })}
+        </div>
+      </section>
     </>
   )
 }
@@ -167,18 +206,18 @@ function SubjectPage({ data, subjectId }) {
 
   return (
     <>
-      <button className="back-link" onClick={() => go()}>→ العودة إلى المواد</button>
-      <div className="page-title"><SubjectLogo subject={subject} large /><div><h1>{subject.name}</h1><p>{subject.description}</p></div></div>
+      <button className="back-link" type="button" aria-label="العودة إلى قائمة المواد" onClick={() => go()}><span aria-hidden="true">→</span> العودة إلى المواد</button>
+      <div className="page-title"><SubjectLogo subject={subject} large /><div><span className="section-kicker">مسار تعليمي</span><h1>{subject.name}</h1><p>{subject.description}</p></div></div>
       <div className="grid">
         {quizzes.map((quiz) => (
           <article className="card quiz-card" key={quiz.id}>
             <div className="quiz-meta"><span>⏱ {quiz.timeLimit} دقيقة</span><span>✓ النجاح {quiz.passingScore}%</span></div>
             <h3>{quiz.title}</h3><p>{quiz.description}</p>
             <span className="question-count">{quiz.questions.length} أسئلة</span>
-            <button className="btn" onClick={() => go(`quiz/${quiz.id}`)}>ابدأ الاختبار</button>
+            <button className="btn" type="button" aria-label={`ابدأ اختبار ${quiz.title}`} onClick={() => go(`quiz/${quiz.id}`)}>ابدأ الاختبار</button>
           </article>
         ))}
-        {!quizzes.length && <div className="card empty-state">لا توجد اختبارات لهذه المادة بعد.</div>}
+        {!quizzes.length && <div className="card empty-state subject-empty"><span className="empty-icon" aria-hidden="true">＋</span><h2>الاختبارات قيد الإعداد</h2><p>لا توجد اختبارات لهذه المادة حاليًا. يمكنك العودة قريبًا أو إضافة اختبار من لوحة الإدارة.</p><button className="btn secondary" type="button" onClick={() => go('admin')}>فتح لوحة الإدارة</button></div>}
       </div>
     </>
   )
@@ -208,8 +247,8 @@ function QuizPage({ data, quizId, onFinish }) {
 
   return (
     <>
-      <button className="back-link" onClick={() => go(`subject/${quiz.subjectId}`)}>→ العودة إلى الاختبارات</button>
-      <div className="quiz-heading"><div><h1>{quiz.title}</h1><p>{quiz.description}</p></div><div className="progress-pill">أجبت عن {Object.keys(answers).length} من {quiz.questions.length}</div></div>
+      <button className="back-link" type="button" onClick={() => go(`subject/${quiz.subjectId}`)}><span aria-hidden="true">→</span> العودة إلى الاختبارات</button>
+      <div className="quiz-heading"><div><h1>{quiz.title}</h1><p>{quiz.description}</p></div><div className="progress-pill" aria-live="polite">أجبت عن {Object.keys(answers).length} من {quiz.questions.length}</div></div>
       {quiz.questions.map((question, questionIndex) => {
         const selectedIndex = answers[question.id]
         const answered = selectedIndex !== undefined
@@ -224,7 +263,7 @@ function QuizPage({ data, quizId, onFinish }) {
                 if (answered && isCorrect) state = 'correct'
                 else if (answered && isSelected) state = 'wrong'
                 return (
-                  <button className={`answer-option ${state}`} disabled={answered} onClick={() => answerQuestion(question, answerIndex)} key={answerIndex}>
+                  <button className={`answer-option ${state}`} type="button" aria-pressed={isSelected} aria-label={`الإجابة ${answerIndex + 1}: ${answer}`} disabled={answered} onClick={() => answerQuestion(question, answerIndex)} key={answerIndex}>
                     <span className="radio-dot">{isSelected ? '●' : '○'}</span><span>{answer}</span>
                     {state === 'correct' && <strong>✓ صحيحة</strong>}{state === 'wrong' && <strong>✕ خاطئة</strong>}
                   </button>
@@ -235,7 +274,7 @@ function QuizPage({ data, quizId, onFinish }) {
           </section>
         )
       })}
-      <div className="finish-bar"><span>{quiz.questions.length - Object.keys(answers).length ? `بقي ${quiz.questions.length - Object.keys(answers).length} سؤال` : 'أجبت عن جميع الأسئلة'}</span><button className="btn" onClick={finishQuiz}>إنهاء الاختبار</button></div>
+      <div className="finish-bar"><span aria-live="polite">{quiz.questions.length - Object.keys(answers).length ? `بقي ${quiz.questions.length - Object.keys(answers).length} سؤال` : 'أجبت عن جميع الأسئلة'}</span><button className="btn" type="button" onClick={finishQuiz}>إنهاء الاختبار</button></div>
     </>
   )
 }
