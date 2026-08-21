@@ -367,16 +367,40 @@ function AdminPage({ data, onChange, onLogout }) {
   }
 
   const addQuiz = (event) => {
-    event.preventDefault(); if (!quizForm.subjectId || !quizForm.title.trim()) return
-    onChange({ ...data, quizzes: [...data.quizzes, { id: `quiz-${Date.now()}`, subjectId: quizForm.subjectId, title: quizForm.title.trim(), description: quizForm.description.trim(), timeLimit: 15, passingScore: 60, questions: [] }] })
+    event.preventDefault()
+    const subjectId = quizForm.subjectId || data.subjects[0]?.id
+    if (!subjectId || !quizForm.title.trim()) return
+    const newQuiz = { id: `quiz-${Date.now()}`, subjectId, title: quizForm.title.trim(), description: quizForm.description.trim(), timeLimit: 15, passingScore: 60, questions: [] }
+    onChange({ ...data, quizzes: [...data.quizzes, newQuiz] })
     setQuizForm((current) => ({ ...current, title: '', description: '' }))
+    setQuestionForm((current) => current.quizId ? current : { ...current, quizId: newQuiz.id })
+    if (!editQuizId) setEditQuizId(newQuiz.id)
   }
 
   const addQuestion = (event) => {
-    event.preventDefault(); if (!questionForm.quizId || !questionForm.text.trim() || questionForm.answers.some((answer) => !answer.trim())) return
-    const nextQuizzes = data.quizzes.map((quiz) => quiz.id === questionForm.quizId ? { ...quiz, questions: [...quiz.questions, { id: `question-${Date.now()}`, text: questionForm.text.trim(), answers: questionForm.answers.map((answer) => answer.trim()), correctIndex: Number(questionForm.correctIndex), explanation: questionForm.explanation.trim() || 'لا يوجد شرح إضافي.' }] } : quiz)
-    onChange({ ...data, quizzes: nextQuizzes }); setQuestionForm((current) => ({ ...current, text: '', answers: ['', '', '', ''], correctIndex: 0, explanation: '' }))
+    event.preventDefault()
+    const quizId = questionForm.quizId || data.quizzes[0]?.id
+    if (!quizId || !questionForm.text.trim() || questionForm.answers.length < 2 || questionForm.answers.some((answer) => !answer.trim())) return
+    const newQuestion = { id: `question-${Date.now()}`, text: questionForm.text.trim(), answers: questionForm.answers.map((answer) => answer.trim()), correctIndex: Number(questionForm.correctIndex), explanation: questionForm.explanation.trim() || 'لا يوجد شرح إضافي.' }
+    const nextQuizzes = data.quizzes.map((quiz) => quiz.id === quizId ? { ...quiz, questions: [...quiz.questions, newQuestion] } : quiz)
+    onChange({ ...data, quizzes: nextQuizzes })
+    setQuestionForm((current) => ({ ...current, text: '', answers: ['', '', '', ''], correctIndex: 0, explanation: '' }))
+    setEditQuizId(quizId)
+    setEditQuestionId(newQuestion.id)
+    setQuestionEdit({ text: newQuestion.text, answers: [...newQuestion.answers], correctIndex: newQuestion.correctIndex, explanation: newQuestion.explanation })
   }
+
+  const addAnswerToNewQuestion = () => setQuestionForm((current) => ({ ...current, answers: [...current.answers, ''] }))
+
+  const removeAnswerFromNewQuestion = (answerIndex) => setQuestionForm((current) => {
+    if (current.answers.length <= 2) return current
+    const correctIndex = Number(current.correctIndex)
+    return {
+      ...current,
+      answers: current.answers.filter((_, index) => index !== answerIndex),
+      correctIndex: answerIndex === correctIndex ? 0 : answerIndex < correctIndex ? correctIndex - 1 : correctIndex,
+    }
+  })
 
   const selectSubjectToEdit = (subjectId) => {
     const subject = data.subjects.find((item) => item.id === subjectId)
@@ -419,7 +443,7 @@ function AdminPage({ data, onChange, onLogout }) {
 
   const saveQuestion = (event) => {
     event.preventDefault()
-    if (!editQuizId || !editQuestionId || !questionEdit.text.trim() || questionEdit.answers.some((answer) => !answer.trim())) return
+    if (!editQuizId || !editQuestionId || !questionEdit.text.trim() || questionEdit.answers.length < 2 || questionEdit.answers.some((answer) => !answer.trim())) return
     const quizzes = data.quizzes.map((quiz) => quiz.id === editQuizId ? {
       ...quiz,
       questions: quiz.questions.map((question) => question.id === editQuestionId ? {
@@ -434,6 +458,18 @@ function AdminPage({ data, onChange, onLogout }) {
     setAdminNotice('تم حفظ تعديلات السؤال والإجابات بنجاح.')
   }
 
+  const addAnswerToEditedQuestion = () => setQuestionEdit((current) => ({ ...current, answers: [...current.answers, ''] }))
+
+  const removeAnswerFromEditedQuestion = (answerIndex) => setQuestionEdit((current) => {
+    if (current.answers.length <= 2) return current
+    const correctIndex = Number(current.correctIndex)
+    return {
+      ...current,
+      answers: current.answers.filter((_, index) => index !== answerIndex),
+      correctIndex: answerIndex === correctIndex ? 0 : answerIndex < correctIndex ? correctIndex - 1 : correctIndex,
+    }
+  })
+
   const resetData = () => { if (window.confirm('إعادة جميع بيانات النسخة التجريبية؟')) onChange(cloneDemoData()) }
 
   return (
@@ -443,9 +479,21 @@ function AdminPage({ data, onChange, onLogout }) {
       {adminNotice && <div className="admin-notice" role="status">✓ {adminNotice}</div>}
       <div className="admin-grid">
         <form className="card form-card" onSubmit={addSubject}><h2>إضافة مادة</h2><label>اسم المادة<input value={subjectName} onChange={(e) => setSubjectName(e.target.value)} required /></label><button className="btn">إضافة</button></form>
-        <form className="card form-card" onSubmit={addQuiz}><h2>إضافة اختبار</h2><label>المادة<select value={quizForm.subjectId} onChange={(e) => setQuizForm({ ...quizForm, subjectId: e.target.value })}>{data.subjects.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label><label>العنوان<input value={quizForm.title} onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })} required /></label><label>الوصف<input value={quizForm.description} onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })} /></label><button className="btn">إضافة الاختبار</button></form>
+        <form className="card form-card" onSubmit={addQuiz}><h2>إضافة اختبار</h2><label>المادة<select value={quizForm.subjectId || data.subjects[0]?.id || ''} onChange={(e) => setQuizForm({ ...quizForm, subjectId: e.target.value })}>{data.subjects.map((subject) => <option value={subject.id} key={subject.id}>{subject.name}</option>)}</select></label><label>العنوان<input value={quizForm.title} onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })} required /></label><label>الوصف<input value={quizForm.description} onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })} /></label><button className="btn">إضافة الاختبار</button></form>
       </div>
-      <form className="card form-card question-form" onSubmit={addQuestion}><h2>إضافة سؤال</h2><label>الاختبار<select value={questionForm.quizId} onChange={(e) => setQuestionForm({ ...questionForm, quizId: e.target.value })}>{data.quizzes.map((quiz) => <option value={quiz.id} key={quiz.id}>{quiz.title}</option>)}</select></label><label>نص السؤال<input value={questionForm.text} onChange={(e) => setQuestionForm({ ...questionForm, text: e.target.value })} required /></label><div className="answers-editor">{questionForm.answers.map((answer, index) => <label key={index}><span><input type="radio" name="correct" checked={Number(questionForm.correctIndex) === index} onChange={() => setQuestionForm({ ...questionForm, correctIndex: index })} /> الصحيحة</span><input value={answer} placeholder={`الإجابة ${index + 1}`} onChange={(e) => { const answers = [...questionForm.answers]; answers[index] = e.target.value; setQuestionForm({ ...questionForm, answers }) }} required /></label>)}</div><label>الشرح<input value={questionForm.explanation} onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })} /></label><button className="btn">إضافة السؤال</button></form>
+      <form className="card form-card question-form" onSubmit={addQuestion}>
+        <h2>إضافة سؤال</h2>
+        <label>الاختبار<select value={questionForm.quizId || data.quizzes[0]?.id || ''} onChange={(event) => setQuestionForm({ ...questionForm, quizId: event.target.value })}>{data.quizzes.map((quiz) => <option value={quiz.id} key={quiz.id}>{quiz.title}</option>)}</select></label>
+        <label>نص السؤال<input value={questionForm.text} onChange={(event) => setQuestionForm({ ...questionForm, text: event.target.value })} required /></label>
+        <div className="answers-section-heading"><div><h3>الإجابات</h3><p>اختر الإجابة الصحيحة، وأضف أو احذف الخيارات حسب الحاجة.</p></div><span>{questionForm.answers.length} إجابات</span></div>
+        <div className="answers-editor">{questionForm.answers.map((answer, index) => <div className="answer-editor-item" key={index}>
+          <div className="answer-editor-head"><label className="answer-correct-control"><input type="radio" name="correct" checked={Number(questionForm.correctIndex) === index} onChange={() => setQuestionForm({ ...questionForm, correctIndex: index })} /> الصحيحة</label><button className="remove-answer-btn" type="button" disabled={questionForm.answers.length <= 2} aria-label={`حذف الإجابة ${index + 1}`} onClick={() => removeAnswerFromNewQuestion(index)}>حذف</button></div>
+          <input value={answer} aria-label={`نص الإجابة ${index + 1}`} placeholder={`الإجابة ${index + 1}`} onChange={(event) => { const answers = [...questionForm.answers]; answers[index] = event.target.value; setQuestionForm({ ...questionForm, answers }) }} required />
+        </div>)}</div>
+        <button className="add-answer-btn" type="button" onClick={addAnswerToNewQuestion}><span aria-hidden="true">＋</span> إضافة إجابة أخرى</button>
+        <label>الشرح<input value={questionForm.explanation} onChange={(event) => setQuestionForm({ ...questionForm, explanation: event.target.value })} /></label>
+        <button className="btn" type="submit">إضافة السؤال</button>
+      </form>
       <div className="admin-section-heading">
         <span className="eyebrow dark">إدارة المحتوى الحالي</span>
         <h2>تعديل المواد والأسئلة</h2>
@@ -466,7 +514,12 @@ function AdminPage({ data, onChange, onLogout }) {
           {editableQuestions.length ? <>
             <label>اختر السؤال<select value={editQuestionId} onChange={(event) => loadQuestionToEdit(editQuizId, event.target.value)}>{editableQuestions.map((question, index) => <option value={question.id} key={question.id}>{index + 1}. {question.text.slice(0, 70)}</option>)}</select></label>
             <label>نص السؤال<textarea rows="4" value={questionEdit.text} onChange={(event) => setQuestionEdit({ ...questionEdit, text: event.target.value })} required /></label>
-            <div className="answers-editor">{questionEdit.answers.map((answer, index) => <label key={index}><span><input type="radio" name="edit-correct" checked={Number(questionEdit.correctIndex) === index} onChange={() => setQuestionEdit({ ...questionEdit, correctIndex: index })} /> الإجابة الصحيحة</span><input value={answer} onChange={(event) => { const answers = [...questionEdit.answers]; answers[index] = event.target.value; setQuestionEdit({ ...questionEdit, answers }) }} required /></label>)}</div>
+            <div className="answers-section-heading"><div><h3>الإجابات</h3><p>يمكن تعديل عدد الخيارات مع تحديد إجابة صحيحة واحدة.</p></div><span>{questionEdit.answers.length} إجابات</span></div>
+            <div className="answers-editor">{questionEdit.answers.map((answer, index) => <div className="answer-editor-item" key={index}>
+              <div className="answer-editor-head"><label className="answer-correct-control"><input type="radio" name="edit-correct" checked={Number(questionEdit.correctIndex) === index} onChange={() => setQuestionEdit({ ...questionEdit, correctIndex: index })} /> الإجابة الصحيحة</label><button className="remove-answer-btn" type="button" disabled={questionEdit.answers.length <= 2} aria-label={`حذف الإجابة ${index + 1}`} onClick={() => removeAnswerFromEditedQuestion(index)}>حذف</button></div>
+              <input value={answer} aria-label={`نص الإجابة ${index + 1}`} onChange={(event) => { const answers = [...questionEdit.answers]; answers[index] = event.target.value; setQuestionEdit({ ...questionEdit, answers }) }} required />
+            </div>)}</div>
+            <button className="add-answer-btn" type="button" onClick={addAnswerToEditedQuestion}><span aria-hidden="true">＋</span> إضافة إجابة أخرى</button>
             <label>شرح الإجابة<textarea rows="3" value={questionEdit.explanation} onChange={(event) => setQuestionEdit({ ...questionEdit, explanation: event.target.value })} /></label>
             <button className="btn" type="submit">حفظ تعديلات السؤال</button>
           </> : <p className="empty-edit-state">لا يحتوي هذا الاختبار على أسئلة لتعديلها.</p>}
