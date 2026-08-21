@@ -140,6 +140,8 @@ function Header({ activePage, adminAuthenticated, onLogout }) {
 function SubjectLogo({ subject, large = false }) {
   const [imageFailed, setImageFailed] = useState(false)
 
+  useEffect(() => setImageFailed(false), [subject.logo])
+
   return (
     <div className={`subject-icon ${large ? 'large' : ''} ${subject.theme ? `subject-icon--${subject.theme}` : ''}`} aria-hidden={imageFailed || !subject.logo ? undefined : 'false'}>
       {subject.logo && !imageFailed
@@ -351,7 +353,7 @@ function AdminPage({ data, onChange, onLogout }) {
   const firstEditableQuiz = data.quizzes.find((quiz) => quiz.questions.length) || data.quizzes[0]
   const firstEditableQuestion = firstEditableQuiz?.questions[0]
   const [editSubjectId, setEditSubjectId] = useState(firstSubject?.id || '')
-  const [subjectEdit, setSubjectEdit] = useState({ name: firstSubject?.name || '', description: firstSubject?.description || '', icon: firstSubject?.icon || '✦' })
+  const [subjectEdit, setSubjectEdit] = useState({ name: firstSubject?.name || '', description: firstSubject?.description || '', icon: firstSubject?.icon || '✦', logo: firstSubject?.logo || '' })
   const [editQuizId, setEditQuizId] = useState(firstEditableQuiz?.id || '')
   const [editQuestionId, setEditQuestionId] = useState(firstEditableQuestion?.id || '')
   const [questionEdit, setQuestionEdit] = useState({ text: firstEditableQuestion?.text || '', answers: firstEditableQuestion?.answers || [], correctIndex: firstEditableQuestion?.correctIndex || 0, explanation: firstEditableQuestion?.explanation || '' })
@@ -405,8 +407,29 @@ function AdminPage({ data, onChange, onLogout }) {
   const selectSubjectToEdit = (subjectId) => {
     const subject = data.subjects.find((item) => item.id === subjectId)
     setEditSubjectId(subjectId)
-    setSubjectEdit({ name: subject?.name || '', description: subject?.description || '', icon: subject?.icon || '✦' })
+    setSubjectEdit({ name: subject?.name || '', description: subject?.description || '', icon: subject?.icon || '✦', logo: subject?.logo || '' })
     setAdminNotice('')
+  }
+
+  const uploadSubjectLogo = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'].includes(file.type)) {
+      setAdminNotice('يرجى اختيار صورة PNG أو JPG أو WebP أو GIF أو SVG.')
+      event.target.value = ''
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setAdminNotice('حجم الصورة كبير. يجب ألا يتجاوز 2 MB.')
+      event.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      setSubjectEdit((current) => ({ ...current, logo: String(reader.result || '') }))
+      setAdminNotice('')
+    }
+    reader.readAsDataURL(file)
   }
 
   const saveSubject = (event) => {
@@ -417,6 +440,7 @@ function AdminPage({ data, onChange, onLogout }) {
       name: subjectEdit.name.trim(),
       description: subjectEdit.description.trim(),
       icon: subjectEdit.icon.trim() || '✦',
+      logo: subjectEdit.logo || '',
     } : subject)
     onChange({ ...data, subjects })
     setAdminNotice('تم حفظ تعديلات المادة بنجاح.')
@@ -456,6 +480,24 @@ function AdminPage({ data, onChange, onLogout }) {
     } : quiz)
     onChange({ ...data, quizzes })
     setAdminNotice('تم حفظ تعديلات السؤال والإجابات بنجاح.')
+  }
+
+  const deleteQuestion = () => {
+    if (!editQuizId || !editQuestionId) return
+    const question = editableQuestions.find((item) => item.id === editQuestionId)
+    if (!question || !window.confirm(`هل أنت متأكد من حذف السؤال: "${question.text}"؟`)) return
+    const remainingQuestions = editableQuestions.filter((item) => item.id !== editQuestionId)
+    const quizzes = data.quizzes.map((quiz) => quiz.id === editQuizId ? { ...quiz, questions: remainingQuestions } : quiz)
+    onChange({ ...data, quizzes })
+    const nextQuestion = remainingQuestions[0]
+    setEditQuestionId(nextQuestion?.id || '')
+    setQuestionEdit({
+      text: nextQuestion?.text || '',
+      answers: nextQuestion ? [...nextQuestion.answers] : [],
+      correctIndex: nextQuestion?.correctIndex || 0,
+      explanation: nextQuestion?.explanation || '',
+    })
+    setAdminNotice('تم حذف السؤال بنجاح.')
   }
 
   const addAnswerToEditedQuestion = () => setQuestionEdit((current) => ({ ...current, answers: [...current.answers, ''] }))
@@ -506,6 +548,17 @@ function AdminPage({ data, onChange, onLogout }) {
           <label>اسم المادة<input value={subjectEdit.name} onChange={(event) => setSubjectEdit({ ...subjectEdit, name: event.target.value })} required /></label>
           <label>الوصف<textarea rows="4" value={subjectEdit.description} onChange={(event) => setSubjectEdit({ ...subjectEdit, description: event.target.value })} /></label>
           <label>الأيقونة أو الرمز<input value={subjectEdit.icon} onChange={(event) => setSubjectEdit({ ...subjectEdit, icon: event.target.value })} /></label>
+          <div className="logo-upload-field">
+            <span className="field-label">صورة أو شعار المادة</span>
+            <div className="logo-upload-row">
+              <SubjectLogo subject={{ ...subjectEdit, name: subjectEdit.name || 'المادة' }} />
+              <div className="logo-upload-actions">
+                <label className="file-upload-btn">اختيار صورة<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" onChange={uploadSubjectLogo} /></label>
+                <small>PNG، JPG، WebP، GIF أو SVG — حتى 2 MB</small>
+                {subjectEdit.logo && <button className="remove-logo-btn" type="button" onClick={() => setSubjectEdit({ ...subjectEdit, logo: '' })}>إزالة الصورة</button>}
+              </div>
+            </div>
+          </div>
           <button className="btn" type="submit">حفظ تعديلات المادة</button>
         </form>
         <form className="card form-card edit-question-form" onSubmit={saveQuestion}>
@@ -521,7 +574,7 @@ function AdminPage({ data, onChange, onLogout }) {
             </div>)}</div>
             <button className="add-answer-btn" type="button" onClick={addAnswerToEditedQuestion}><span aria-hidden="true">＋</span> إضافة إجابة أخرى</button>
             <label>شرح الإجابة<textarea rows="3" value={questionEdit.explanation} onChange={(event) => setQuestionEdit({ ...questionEdit, explanation: event.target.value })} /></label>
-            <button className="btn" type="submit">حفظ تعديلات السؤال</button>
+            <div className="question-edit-actions"><button className="btn" type="submit">حفظ تعديلات السؤال</button><button className="btn danger" type="button" onClick={deleteQuestion}>حذف السؤال</button></div>
           </> : <p className="empty-edit-state">لا يحتوي هذا الاختبار على أسئلة لتعديلها.</p>}
         </form>
       </div>

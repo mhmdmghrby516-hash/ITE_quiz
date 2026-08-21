@@ -240,6 +240,18 @@
   .admin-section-heading p { color: var(--muted); }
   .edit-grid { align-items: start; }
   .empty-edit-state { border: 1px dashed var(--border); border-radius: 13px; padding: 20px; color: var(--muted); background: #f8fafc; text-align: center; }
+  .logo-upload-field { display: grid; gap: 10px; margin-bottom: 18px; }
+  .field-label { color: #1e293b; font-weight: 700; }
+  .logo-upload-row { display: flex; align-items: center; gap: 16px; border: 1px dashed #a5b4fc; border-radius: 16px; padding: 15px; background: #f8faff; }
+  .logo-upload-actions { display: flex; align-items: flex-start; flex-direction: column; gap: 7px; }
+  .logo-upload-actions small { color: var(--muted); }
+  .file-upload-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 11px; padding: 9px 15px; color: var(--primary-dark); background: var(--primary-soft); cursor: pointer; font-weight: 700; transition: background .18s, transform .18s; }
+  .file-upload-btn:hover { background: #dbe2ff; transform: translateY(-1px); }
+  .file-upload-btn:focus-within { outline: 3px solid #c7d2fe; }
+  .file-upload-btn input { position: absolute; width: 1px !important; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .remove-logo-btn { min-height: 36px; border-radius: 9px; padding: 6px 10px; color: var(--danger); background: #fef2f2; cursor: pointer; font-size: 12px; font-weight: 700; }
+  .remove-logo-btn:hover { color: #fff; background: var(--danger); }
+  .question-edit-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
   .footer { position: relative; overflow: hidden; padding: 64px 0 22px; color: #cbd5e1; background: #0f172a; }
   .footer::before { content: ''; position: absolute; inset-inline-end: -120px; top: -190px; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,.22), transparent 68%); pointer-events: none; }
